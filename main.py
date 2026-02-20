@@ -1,8 +1,10 @@
-from fastapi import FastAPI, Response, status
+from fastapi import FastAPI, Response, status, HTTPException
 from fastapi.params import Body
 from pydantic import BaseModel
 from typing import Optional
 from random import randrange
+
+from sentry_sdk import HttpTransport
 
 app = FastAPI()
 
@@ -42,7 +44,9 @@ def create_posts(new_post: Post):
 def get_post(id :int, respose: Response):
     post = find_post(id)
     if not post:
-        respose.status_code = status.HTTP_404_NOT_FOUND
-        return {"message": f"post with id {id} not found"}
+         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, 
+                             detail=f"post with id {id} was not found")
+        # respose.status_code = status.HTTP_404_NOT_FOUND
+        # return {"message": f"post with id {id} not found"}     You can also use this instead 
     return {"post data": post}
         
