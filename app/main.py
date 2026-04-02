@@ -1,5 +1,3 @@
-from traceback import print_tb
-
 from fastapi import FastAPI, Response, status, HTTPException
 from pydantic import BaseModel
 from typing import Optional
@@ -11,7 +9,6 @@ class Post(BaseModel):
     title: str
     content: str
     publish:  bool = True
-    rating: Optional[int] = None
 
 
 my_posts = [{"title": "ONE", "content": "This is post one dude", "id": 1}, {"title": "TWO", "content": "Second one here", "id": 2}]
@@ -50,7 +47,7 @@ def get_post(id :int, respose: Response):
     post = find_post(id)
     if not post:
          raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, 
-                             detail=f"post with id {id} was not found")
+                            detail=f"post with id {id} was not found")
         # respose.status_code = status.HTTP_404_NOT_FOUND
         # return {"message": f"post with id {id} not found"}     You can also use this instead 
     return {"post data": post}
@@ -62,7 +59,7 @@ def delete_post(id: int):
      
      if index == None:
           raise HTTPException(status_code=404, detail=f"The post of id {id} is not found")
-
+    
      my_posts.pop(index) 
      return Response(status_code=status.HTTP_204_NO_CONTENT) # if you send a response of 204, you shouldn't be sending any message back
 
