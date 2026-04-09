@@ -60,12 +60,17 @@ def create_posts(post: Post):
     cursor.execute("""INSERT INTO posts (title, content, published) VALUES (%s, %s, %s) RETURNING *""",
                    (post.title, post.content, post.published))
     new_post = cursor.fetchone()
+
+    conn.commit()
+    
     return {"data": new_post}
 
 
 @app.get("/posts/{id}")
 def get_post(id :int, respose: Response):
-    post = find_post(id)
+    cursor.execute("""SELECT * FROM posts WHERE id = %s""", (str(id)))
+    #post = find_post(id)
+    post = cursor.fetchone()
     if not post:
          raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, 
                             detail=f"post with id {id} was not found")
