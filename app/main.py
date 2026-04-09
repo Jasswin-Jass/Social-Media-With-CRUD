@@ -11,7 +11,7 @@ app = FastAPI()
 class Post(BaseModel):
     title: str
     content: str
-    publish:  bool = True
+    published:  bool = True
 
 while (True):
      
@@ -56,14 +56,11 @@ def get_posts():
     return {"data": posts}
 
 @app.post("/posts", status_code=status.HTTP_201_CREATED)
-def create_posts(new_post: Post):
-    print(new_post) # new_post here is in pydantic model(data type) which has attributes that we mentiond in the base model class
-    print(new_post.model_dump()) # to convert a pydatic model to a dictionary use .model_dump() method and you can use model_dump_json() for json
-
-    post_dict = new_post.model_dump()
-    post_dict["id"] = randrange(0, 10000000)
-    my_posts.append(post_dict)
-    return {"data": post_dict}
+def create_posts(post: Post):
+    cursor.execute("""INSERT INTO posts (title, content, published) VALUES (%s, %s, %s) RETURNING *""",
+                   (post.title, post.content, post.published))
+    new_post = cursor.fetchone()
+    return {"data": new_post}
 
 
 @app.get("/posts/{id}")
