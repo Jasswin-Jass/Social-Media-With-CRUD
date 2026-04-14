@@ -1,22 +1,16 @@
-from fastapi import FastAPI, Response, status, HTTPException
+from fastapi import Depends, FastAPI, Response, status, HTTPException 
 from pydantic import BaseModel
 from typing import Optional
 import psycopg2
 from psycopg2.extras import RealDictCursor
 import time 
 from . import models
-from .database import engine, SessionLocal
+from .database import engine , get_db
+from sqlalchemy.orm import Session
 
-models.Base.metadata.create_all(bind=engine)
+models.Base.metadata.create_all(bind=engine)   # this will create the tables in the database based on the models we have defined in the models.py file. We can just run this code once and it will create the tables for us. We don't need to run this code every time we start the server. We can just comment it out after running it once.
 
 app = FastAPI()
-
-def get_db():
-    db = SessionLocal()
-    try:
-        yield db
-    finally:
-        db.close()
 
 class Post(BaseModel):
     title: str
@@ -119,4 +113,8 @@ def update_post(id: int, post: Post):
     # my_posts[index] = post_dict
     
     return {'data': updated_post }
-     
+
+@app.get("/sqlalchemy")
+def test_posts(db: Session = Depends(get_db)):
+    return {status: "Success"}
+
