@@ -67,8 +67,8 @@ def create_posts(post: Post, db: Session = Depends(get_db)):
     # new_post = cursor.fetchone()
 
     # conn.commit()
-
-    new_post = models.Post(title=post.title, content = post.content, published = post.published)
+    
+    new_post = models.Post(**post.model_dump()) # this will create a new post object based on the data that we have in the post object that we get from the request body and it will also convert the post object to a dictionary and then we can use the values of that dictionary to create a new post object and we can also use the model_dump() method to get the data from the post object in a dictionary format and then we use ** to unpack the dict and pass as eg. id=post.id 
     db.add(new_post)
     db.commit()
     db.refresh(new_post) # this will refresh the new_post object with the data from the database and it will also get the id of the new post that was created in the database and it is important to do this after committing the changes to the database because before committing, the new_post object will not have an id and it will be None and after committing, it will have an id and we can use that id to return the new post in the response.
