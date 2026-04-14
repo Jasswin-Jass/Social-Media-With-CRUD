@@ -54,19 +54,24 @@ def root():
     return {"message": "Hello jass"} 
 
 @app.get("/posts")
-def get_posts():
-    cursor.execute("SELECT * FROM posts")
-    posts = cursor.fetchall()
+def get_posts(db: Session = Depends(get_db)):
+    # cursor.execute("SELECT * FROM posts")
+    # posts = cursor.fetchall()
+    posts = db.query(models.Post).all()
     return {"data": posts}
 
 @app.post("/posts", status_code=status.HTTP_201_CREATED)
-def create_posts(post: Post):
-    cursor.execute("""INSERT INTO posts (title, content, published) VALUES (%s, %s, %s) RETURNING *""",
-                   (post.title, post.content, post.published))
-    new_post = cursor.fetchone()
+def create_posts(post: Post, db: Session = Depends(get_db)):
+    # cursor.execute("""INSERT INTO posts (title, content, published) VALUES (%s, %s, %s) RETURNING *""",
+    #                (post.title, post.content, post.published))
+    # new_post = cursor.fetchone()
 
-    conn.commit()
-    
+    # conn.commit()
+
+    new_post = models.Post(title=post.title, content = post.content, published = post.published)
+    db.add(new_post)
+    db.commit()
+    db.refresh(new_post) # this will refresh the new_post object with the data from the database and it will also get the id of the new post that was created in the database and it is important to do this after committing the changes to the database because before committing, the new_post object will not have an id and it will be None and after committing, it will have an id and we can use that id to return the new post in the response.
     return {"data": new_post}
 
 
