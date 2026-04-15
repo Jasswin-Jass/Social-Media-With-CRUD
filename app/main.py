@@ -76,10 +76,13 @@ def create_posts(post: Post, db: Session = Depends(get_db)):
 
 
 @app.get("/posts/{id}")
-def get_post(id :int, respose: Response):
-    cursor.execute("""SELECT * FROM posts WHERE id = %s""", (str(id)))
-    #post = find_post(id)
-    post =cursor.fetchone()
+def get_post(id :int, respose: Response, db: Session = Depends(get_db)):
+    # cursor.execute("""SELECT * FROM posts WHERE id = %s""", (str(id)))
+    # #post = find_post(id)
+    # post =cursor.fetchone()
+
+    post = db.query(models.Post).filter(models.Post.id == id).first() # this will filter the posts based on the id and it will return the first post that matches the id and if there is no post that matches it will return None 
+
     if not post:
          raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, 
                             detail=f"post with id {id} was not found")
