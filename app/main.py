@@ -1,10 +1,12 @@
+from multiprocessing import synchronize
+
 from fastapi import Depends, FastAPI, Response, status, HTTPException 
 from pydantic import BaseModel
 from typing import Optional
 import psycopg2
 from psycopg2.extras import RealDictCursor
 import time 
-from . import models
+from . import models, schemas
 from .database import engine , get_db
 from sqlalchemy.orm import Session
 
@@ -12,10 +14,6 @@ models.Base.metadata.create_all(bind=engine)   # this will create the tables in 
 
 app = FastAPI()
 
-class Post(BaseModel):
-    title: str
-    content: str
-    published:  bool = True
 
 while (True):
      
@@ -61,7 +59,7 @@ def get_posts(db: Session = Depends(get_db)):
     return {"data": posts}
 
 @app.post("/posts", status_code=status.HTTP_201_CREATED)
-def create_posts(post: Post, db: Session = Depends(get_db)):
+def create_posts(post: schemas.Post, db: Session = Depends(get_db)):
     # cursor.execute("""INSERT INTO posts (title, content, published) VALUES (%s, %s, %s) RETURNING *""",
     #                (post.title, post.content, post.published))
     # new_post = cursor.fetchone()
@@ -91,36 +89,45 @@ def get_post(id :int, respose: Response, db: Session = Depends(get_db)):
     return {"post data": post}
         
 @app.delete("/posts/{id}", status_code=status.HTTP_204_NO_CONTENT)
-def delete_post(id: int):
+def delete_post(id: int, db: Session = Depends(get_db)):
     # deleting a post
     #index = find_index(id)
     
-    cursor.execute("""DELETE FROM posts WHERE id = %s RETURNING *""", (str(id)))
-    index = cursor.fetchone()
-    conn.commit()
+    # cursor.execute("""DELETE FROM posts WHERE id = %s RETURNING *""", (str(id)))
+    # index = cursor.fetchone()
+    # conn.commit()
+
+    post_query = db.query(models.Post).filter(models.Post.id == id)
     
-    if index == None:
+    if post_query.first() == None:
         raise HTTPException(status_code=404, detail=f"The post of id {id} is not found")
     
     #my_posts.pop(index) 
+
+    post_query.delete(synchronize_session=False) # this will delete the post from the database and it will also synchronize the session with the database and it is important to do this because if we don't do this, then the session will not be aware of the changes that we have made to the database and it will not be able to commit those changes to the database and it will also cause issues when we try to query the database after deleting a post because the session will still think that the post is there and it will return an error when we try to query for that post after deleting it.
+    db.commit() # this will commit the changes to the database and it is important to do this after deleting a post because if we don't do this, then the changes that we have made to the database will not be saved 
+    
     return Response(status_code=status.HTTP_204_NO_CONTENT) # if you send a response of 204, you shouldn't be sending any message back
 
 @app.put("/posts/{id}")
-def update_post(id: int, post: Post):
+def update_post(id: int, post: schemas.Post, db: Session = Depends(get_db)):
     #index = find_index(id)
     
-    cursor.execute("""UPDATE posts SET title = %s, content = %s, published = %s WHERE id = %s RETURNING *""", (post.title, post.content, post.published, str(id)))
-    updated_post = cursor.fetchone()
-    conn.commit()
+    # cursor.execute("""UPDATE posts SET title = %s, content = %s, published = %s WHERE id = %s RETURNING *""", (post.title, post.content, post.published, str(id)))
+    # updated_post = cursor.fetchone()
+    # conn.commit()
 
-    if updated_post == None:
+    post_query = db.query(models.Post).filter(models.Post.id == id)
+    if post_query.first() == None:
         raise HTTPException(status_code=404, detail=f"The post of id {id} is not found")
     
+    post_query.update(post.model_dump(), synchronize_session=False)  # pyright: ignore[reportArgumentType]
     # post_dict = post.model_dump()
     # post_dict['id'] = id
     # my_posts[index] = post_dict
-    
-    return {'data': updated_post }
+    db.commit()
+
+    return {'data': post_query.first() }
 
 @app.get("/sqlalchemy")
 def test_posts(db: Session = Depends(get_db)):
