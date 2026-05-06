@@ -4,3 +4,13 @@ class Post(BaseModel):
     title: str
     content: str
     published:  bool = True
+
+class CreatPost(BaseModel):
+    title: str
+    content: str
+    published:  bool = True
+
+class UpdatePost(BaseModel):
+    title: str
+    content: str
+    published: bool 
