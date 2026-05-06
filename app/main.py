@@ -1,8 +1,8 @@
 from fastapi import Depends, FastAPI, Response, status, HTTPException 
 from pydantic import BaseModel
 from typing import Optional
-import psycopg2
-from psycopg2.extras import RealDictCursor
+# import psycopg2
+# from psycopg2.extras import RealDictCursor
 import time 
 from . import models, schemas
 from .database import engine , get_db
@@ -13,25 +13,25 @@ models.Base.metadata.create_all(bind=engine)   # this will create the tables in 
 app = FastAPI()
 
 
-while (True):
+# while (True):
      
 
-    try: 
-        conn = psycopg2.connect(
-            host='localhost', 
-            database='Fastapi', 
-            user='postgres', 
-            password='jass@@00', 
-            cursor_factory=RealDictCursor    # we use this to get the column names in the output instead of just getting the values in a list and it is imported from psycopg2.extras
-            )
-        cursor = conn.cursor()
-        print("Database connection was successful")
-        break
+#     try: 
+#         conn = psycopg2.connect(
+#             host='localhost', 
+#             database='Fastapi', 
+#             user='postgres', 
+#             password='jass@@00', 
+#             cursor_factory=RealDictCursor    # we use this to get the column names in the output instead of just getting the values in a list and it is imported from psycopg2.extras
+#             )
+#         cursor = conn.cursor()
+#         print("Database connection was successful")
+#         break
 
-    except Exception as error:
-        print("Cennection to database failed")
-        print("Error:", error)
-        time.sleep(2)
+#     except Exception as error:
+#         print("Cennection to database failed")
+#         print("Error:", error)
+#         time.sleep(2)
 
 my_posts = [{"title": "ONE", "content": "This is post one dude", "id": 1}, {"title": "TWO", "content": "Second one here", "id": 2}]
 
