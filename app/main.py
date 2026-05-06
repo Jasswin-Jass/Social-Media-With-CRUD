@@ -127,8 +127,3 @@ def update_post(id: int, post: schemas.PostCreate, db: Session = Depends(get_db)
 
     return {'data': post_query.first() }
 
-@app.get("/sqlalchemy")
-def test_posts(db: Session = Depends(get_db)):
-    posts = db.query(models.Post).all()
-    return {"data": posts}
-
