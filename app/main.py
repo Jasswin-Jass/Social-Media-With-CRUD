@@ -1,8 +1,8 @@
 from fastapi import Depends, FastAPI, Response, status, HTTPException 
 from pydantic import BaseModel
-from typing import Optional
-# import psycopg2
-# from psycopg2.extras import RealDictCursor
+from typing import Optional, List
+import psycopg2
+from psycopg2.extras import RealDictCursor
 import time 
 from . import models, schemas
 from .database import engine , get_db
@@ -49,14 +49,14 @@ def find_index(id):
 def root():
     return {"message": "Hello jass"} 
 
-@app.get("/posts")
+@app.get("/posts", response_model=List[schemas.PostResponse])
 def get_posts(db: Session = Depends(get_db)):
     # cursor.execute("SELECT * FROM posts")
     # posts = cursor.fetchall()
     posts = db.query(models.Post).all()
-    return {"data": posts}
+    return posts
 
-@app.post("/posts", status_code=status.HTTP_201_CREATED)
+@app.post("/posts", status_code=status.HTTP_201_CREATED, response_model=schemas.PostResponse) # the response model is used to specify the model we want to give the response, it is in the schemas file
 def create_posts(post: schemas.PostCreate, db: Session = Depends(get_db)):
     # cursor.execute("""INSERT INTO posts (title, content, published) VALUES (%s, %s, %s) RETURNING *""",
     #                (post.title, post.content, post.published))
@@ -68,11 +68,11 @@ def create_posts(post: schemas.PostCreate, db: Session = Depends(get_db)):
     db.add(new_post)
     db.commit()
     db.refresh(new_post) # this will refresh the new_post object with the data from the database and it will also get the id of the new post that was created in the database and it is important to do this after committing the changes to the database because before committing, the new_post object will not have an id and it will be None and after committing, it will have an id and we can use that id to return the new post in the response.
-    return {"data": new_post}
+    return new_post
 
 
-@app.get("/posts/{id}")
-def get_post(id :int, respose: Response, db: Session = Depends(get_db)):
+@app.get("/posts/{id}", response_model=schemas.PostResponse)
+def get_post(id :int, response: Response, db: Session = Depends(get_db)):
     # cursor.execute("""SELECT * FROM posts WHERE id = %s""", (str(id)))
     # #post = find_post(id)
     # post =cursor.fetchone()
@@ -84,7 +84,7 @@ def get_post(id :int, respose: Response, db: Session = Depends(get_db)):
                             detail=f"post with id {id} was not found")
         # respose.status_code = status.HTTP_404_NOT_FOUND
         # return {"message": f"post with id {id} not found"}     You can also use this instead 
-    return {"post data": post}
+    return post
         
 @app.delete("/posts/{id}", status_code=status.HTTP_204_NO_CONTENT)
 def delete_post(id: int, db: Session = Depends(get_db)):
@@ -97,7 +97,7 @@ def delete_post(id: int, db: Session = Depends(get_db)):
 
     post_query = db.query(models.Post).filter(models.Post.id == id)
     
-    if post_query.first() == None:
+    if post_query.first() is None:
         raise HTTPException(status_code=404, detail=f"The post of id {id} is not found")
     
     #my_posts.pop(index) 
@@ -107,7 +107,7 @@ def delete_post(id: int, db: Session = Depends(get_db)):
     
     return Response(status_code=status.HTTP_204_NO_CONTENT) # if you send a response of 204, you shouldn't be sending any message back
 
-@app.put("/posts/{id}")
+@app.put("/posts/{id}", response_model=schemas.PostResponse)
 def update_post(id: int, post: schemas.PostCreate, db: Session = Depends(get_db)):
     #index = find_index(id)
     
@@ -125,5 +125,5 @@ def update_post(id: int, post: schemas.PostCreate, db: Session = Depends(get_db)
     # my_posts[index] = post_dict
     db.commit()
 
-    return {'data': post_query.first() }
+    return post_query.first() 
 
