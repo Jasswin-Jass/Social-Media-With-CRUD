@@ -139,3 +139,10 @@ def create_user(user: schemas.UserCreate, db: Session = Depends(get_db)):
     db.refresh(new_user) # this will refresh the new_post object with the data from the database and it will also get the id of the new post that was created in the database and it is important to do this after committing the changes to the database because before committing, the new_post object will not have an id and it will be None and after committing, it will have an id and we can use that id to return the new post in the response.
     
     return new_user
+
+@app.get('/users/{id}', response_model=schemas.UserResponse)
+def get_user(id: int, db: Session = Depends((get_db))):
+    user = db.query(models.User).filter(models.User.id == id).first()
+    if not user:
+        raise HTTPException(status_code=404, detail=f"The user of id {id} is not found")
+    return user
