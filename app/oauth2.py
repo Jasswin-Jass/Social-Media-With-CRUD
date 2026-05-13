@@ -26,7 +26,7 @@ def verify_access_token(token: str, credentials_exception):
     try: 
         payload = jwt.decode(token=token, key=SECRET_KEY, algorithms=[ALGORITHM])
 
-        id: Optional[str] = payload.get("user_id") 
+        id: Optional[str] = payload.get("user_id") # this is to verify the acces tokens
         if id is None:
             raise credentials_exception
         token_data = schemas.TokenData(id=id)
@@ -34,7 +34,7 @@ def verify_access_token(token: str, credentials_exception):
     except JWTError:
         raise credentials_exception
     
-def get_current_user(token: str = Depends(oauth2_scheme)): # this is to verify the acces tokens
+def get_current_user(token: str = Depends(oauth2_scheme)): 
     credentials_exception = HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail=f"Could not validate credentials", headers={"WWW-Authernticate": "Bearer"})
 
     return verify_access_token(token=token, credentials_exception=credentials_exception)
