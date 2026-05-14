@@ -21,12 +21,12 @@ def create_access_token(data: dict):
 
     return encoded_jwt
 
-def verify_access_token(token: str, credentials_exception):
+def verify_access_token(token: str, credentials_exception): # this is to verify the acces tokens
 
     try: 
         payload = jwt.decode(token=token, key=SECRET_KEY, algorithms=[ALGORITHM])
 
-        id: Optional[str] = payload.get("user_id") # this is to verify the acces tokens
+        id: Optional[int] = payload.get("user_id") # we get the user_id from the payload of the token and we use Optional[str] because it can be None if there is no user_id in the payload and we also specify that it is a string because the user_id is a string in our case but it can be an int or any other type depending on how you set it up in your application
         if id is None:
             raise credentials_exception
         token_data = schemas.TokenData(id=id)
