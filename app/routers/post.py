@@ -25,8 +25,8 @@ def create_posts(post: schemas.PostCreate, db: Session = Depends(get_db), curren
     # new_post = cursor.fetchone()
 
     # conn.commit()
-    print(current_user.email) # type: ignore
-    new_post = models.Post(**post.model_dump()) # this will create a new post object based on the data that we have in the post object that we get from the request body and it will also convert the post object to a dictionary and then we can use the values of that dictionary to create a new post object and we can also use the model_dump() method to get the data from the post object in a dictionary format and then we use ** to unpack the dict and pass as eg. id=post.id 
+
+    new_post = models.Post(owner_id=current_user.id, **post.model_dump()) # type: ignore # this will create a new post object based on the data that we have in the post object that we get from the request body and it will also convert the post object to a dictionary and then we can use the values of that dictionary to create a new post object and we can also use the model_dump() method to get the data from the post object in a dictionary format and then we use ** to unpack the dict and pass as eg. id=post.id 
     db.add(new_post)
     db.commit()
     db.refresh(new_post) # this will refresh the new_post object with the data from the database and it will also get the id of the new post that was created in the database and it is important to do this after committing the changes to the database because before committing, the new_post object will not have an id and it will be None and after committing, it will have an id and we can use that id to return the new post in the response.
@@ -62,6 +62,10 @@ def delete_post(id: int, db: Session = Depends(get_db), current_user: int = Depe
     if post_query.first() is None:
         raise HTTPException(status_code=404, detail=f"The post of id {id} is not found")
     
+    if post_query.first().owner_id != current_user.id: # type: ignore
+        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Not authorized to perform requested action")
+        
+
     #my_posts.pop(index) 
 
     post_query.delete(synchronize_session=False) # this will delete the post from the database and it will also synchronize the session with the database and it is important to do this because if we don't do this, then the session will not be aware of the changes that we have made to the database and it will not be able to commit those changes to the database and it will also cause issues when we try to query the database after deleting a post because the session will still think that the post is there and it will return an error when we try to query for that post after deleting it.
@@ -78,8 +82,12 @@ def update_post(id: int, post: schemas.PostCreate, db: Session = Depends(get_db)
     # conn.commit()
 
     post_query = db.query(models.Post).filter(models.Post.id == id)
+    
     if post_query.first() == None:
         raise HTTPException(status_code=404, detail=f"The post of id {id} is not found")
+    
+    if post_query.first().owner_id != current_user.id: # type: ignore
+        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Not authorized to perform requested action")
     
     post_query.update(post.model_dump(), synchronize_session=False)  # pyright: ignore[reportArgumentType]
     # post_dict = post.model_dump()
