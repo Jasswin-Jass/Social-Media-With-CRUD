@@ -58,11 +58,12 @@ def delete_post(id: int, db: Session = Depends(get_db), current_user: int = Depe
     # conn.commit()
 
     post_query = db.query(models.Post).filter(models.Post.id == id)
+    user_post = post_query.first() # this will get the first post that matches the id and if there is no post that matches it will return None
     
-    if post_query.first() is None:
+    if user_post is None:
         raise HTTPException(status_code=404, detail=f"The post of id {id} is not found")
     
-    if post_query.first().owner_id != current_user.id: # type: ignore
+    if user_post.owner_id != current_user.id: # type: ignore
         raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Not authorized to perform requested action")
         
 
@@ -82,11 +83,12 @@ def update_post(id: int, post: schemas.PostCreate, db: Session = Depends(get_db)
     # conn.commit()
 
     post_query = db.query(models.Post).filter(models.Post.id == id)
-    
-    if post_query.first() == None:
+    user_post = post_query.first()
+
+    if user_post == None:
         raise HTTPException(status_code=404, detail=f"The post of id {id} is not found")
     
-    if post_query.first().owner_id != current_user.id: # type: ignore
+    if user_post.owner_id != current_user.id: # type: ignore
         raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Not authorized to perform requested action")
     
     post_query.update(post.model_dump(), synchronize_session=False)  # pyright: ignore[reportArgumentType]
