@@ -97,4 +97,4 @@ def update_post(id: int, post: schemas.PostCreate, db: Session = Depends(get_db)
     # my_posts[index] = post_dict
     db.commit()
 
-    return post_query.first()  # to return the first post 
+    return post_query.first()  
